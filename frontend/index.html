@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>E-commerce Cart</title>
+</head>
+
+<body>
+  <h2>Products:</h2>
+  <br>
+  <div class="container"></div>
+  <ul id="p1">Cart Items:</ul>
+  <p id="p2">Cart Total:</p>
+  <style>
+    .container{
+        display:flex;
+        font-size:large;
+        justify-content: space-evenly;
+    }
+  </style>
+  <script>
+    let data;
+    fetch("https://www.snucdelta.tech/api/inductions/get-products")
+    .then((Response)=>Response.json())
+    .then((responseData)=>{
+      data=responseData;
+      DataHandling(data);})
+    .catch((error)=>document.write("cant fetch data"));
+
+    function DataHandling(data){
+        const container=document.querySelector(".container");
+        data.laptops.forEach((i)=>{
+        let lapdiv=document.createElement("div");
+        lapdiv.innerHTML=
+        `<pre>
+            ${i.model}
+            BasePrice:${i.basePrice}
+            RAM:
+            ${i.RAM.map((ram)=>`
+            <input type="radio"  name="${i.model}-ram" value="${ram.size}"> ${ram.size}:${ram.price} `)}
+            STORAGE:
+            ${i.storage.map((store)=>`
+            <input type="radio"  name="${i.storage}-storage" value="${store.size}">${store.type} ${store.size}:${store.price} `)}
+        </pre>
+        <button onclick="addtocart('${i.model}');getTotal()">Add to cart</button>`
+        container.appendChild(lapdiv);
+        });
+        
+    }
+    const cart=[];
+    function addtocart(modelname) {
+      const ramsize = document.querySelector(`input[name="${modelname}-ram"]:checked`);
+      const storagesize = document.querySelector(`input[name="${modelname}-storage"]:checked`);
+
+      const lapconf = {
+        model: modelname,
+        RAM: ramsize.value,
+        Storage: storagesize.value
+      };
+      cart.push(lapconf);
+      if (!ramsize || !storagesize) {
+        alert("You have to choose both RAM and storage configuration");
+        return;
+      }
+      getTotal();
+    }
+
+    function getTotal() {
+      let total = 0;
+      const cart_list=document.getElementById("p1");
+      cart_list.innerHTML=" ";
+      for (let i=0;i<cart.length;i++) {
+        a=cart[i];
+        const lap = data.laptops.find((laptop)=>a.model===laptop.model);
+        let ramvalue = 0;
+        let storagevalue = 0;
+
+        if (lap) {
+          ramvalue = lap.RAM.find((ram) =>ram.size===a.RAM).price;
+          storagevalue = lap.storage.find((storage) =>storage.size===a.Storage).price;
+        }
+        total += lap.basePrice+ramvalue+storagevalue;
+
+        const cart_item=document.createElement("li");
+        cart_item.innerHTML+=` ${a.model}-'\t'- ${a.RAM} - '\t' - ${a.Storage} - '\t' - "Price:" -${ramvalue+storagevalue+lap.basePrice}  '\n' `; 
+        const button1=document.createElement("button");
+
+        button1.textContent="Remove from cart";
+        button1.addEventListener("click",()=>{
+          RemovefromCart(i);
+        });
+        cart_item.appendChild(button1);
+        cart_list.appendChild(cart_item);
+      }
+      document.getElementById("p2").innerHTML="Cart total:"+total;
+    }
+    function RemovefromCart(index){
+           if(index>=0 && index<cart.length){
+            cart.splice(index,1);
+            getTotal();
+           }
+           
+    }
+    document.getElementById("p1").style.fontSize="large";
+    document.getElementById("p1").style.marginLeft="250px";
+    document.getElementById("p2").style.fontSize="large";
+    document.getElementById("p2").style.marginLeft="300px";
+    
+
+
+  </script>
+
+</body>
+
+</html>
+
+
